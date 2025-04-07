@@ -13,7 +13,7 @@ import (
 type UserServiceInterface interface {
 	GetAll(ctx context.Context) *model.UserList
 	GetByID(ctx context.Context, ID uuid.UUID) *model.User
-	GetByCpf(ctx context.Context, Cpf string) (usr *model.User, err error)
+	GetByEmail(ctx context.Context, email string) (usr *model.User, err error)
 	Create(ctx context.Context, User *model.User) (*model.User, error)
 	Update(ctx context.Context, ID uuid.UUID, User *model.User) int64
 	Delete(ctx context.Context, ID uuid.UUID) int64
@@ -32,7 +32,7 @@ func NewUserService(database_pool pgsql.DatabaseInterface) *User_service {
 }
 
 func (us *User_service) GetAll(ctx context.Context) *model.UserList {
-	rows, err := us.dbp.GetDB().QueryContext(ctx, "SELECT id,  username, name_full, email, enabled, created_at, updated_at FROM tb_user LIMIT 100")
+	rows, err := us.dbp.GetDB().QueryContext(ctx, "SELECT id, id_tanant, username, name_full, email, enabled, created_at, updated_at FROM tb_user LIMIT 100")
 	if err != nil {
 		logger.Error(err.Error(), err)
 	}
@@ -43,7 +43,7 @@ func (us *User_service) GetAll(ctx context.Context) *model.UserList {
 
 	for rows.Next() {
 		u := model.User{}
-		if err := rows.Scan(&u.ID, &u.Username, &u.Name, &u.Email, &u.Enable, &u.CreatedAt, &u.UpdatedAt); err != nil {
+		if err := rows.Scan(&u.ID, &u.TanantID, &u.Username, &u.Name, &u.Email, &u.Enable, &u.CreatedAt, &u.UpdatedAt); err != nil {
 			logger.Error(err.Error(), err)
 		} else {
 			User_list.List = append(User_list.List, &u)
@@ -54,7 +54,7 @@ func (us *User_service) GetAll(ctx context.Context) *model.UserList {
 }
 
 func (us *User_service) GetByID(ctx context.Context, ID uuid.UUID) *model.User {
-	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, username, name_full, email, enabled, created_at, updated_at FROM tb_user WHERE id = $1")
+	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, id_tanant, username, name_full, email, enabled, created_at, updated_at FROM tb_user WHERE id = $1")
 	if err != nil {
 		logger.Error(err.Error(), err)
 	}
@@ -63,7 +63,7 @@ func (us *User_service) GetByID(ctx context.Context, ID uuid.UUID) *model.User {
 
 	u := model.User{}
 
-	if err := stmt.QueryRowContext(ctx, ID).Scan(&u.ID, &u.Username, &u.Name, &u.Email, &u.Enable, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	if err := stmt.QueryRowContext(ctx, ID).Scan(&u.ID, &u.TanantID, &u.Username, &u.Name, &u.Email, &u.Enable, &u.CreatedAt, &u.UpdatedAt); err != nil {
 		logger.Error(err.Error(), err)
 	}
 
@@ -80,9 +80,9 @@ func (us *User_service) Create(ctx context.Context, User *model.User) (*model.Us
 	User.CheckPassword(User.Password)
 	User.PrepareToSave()
 
-	query := "INSERT INTO tb_user (username, name_full, hashed_password, email, enabled) VALUES ($1, $2, $3, $4, $5)"
+	query := "INSERT INTO tb_user (id_tanant, username, name_full, hashed_password, email, enabled) VALUES ($1, $2, $3, $4, $5)"
 
-	_, err = tx.ExecContext(ctx, query, User.Username, User.Name, User.HashedPassword, User.Email, User.Enable)
+	_, err = tx.ExecContext(ctx, query, User.TanantID, User.Username, User.Name, User.HashedPassword, User.Email, User.Enable)
 	if err != nil {
 		logger.Error("Error executing SQL query insert user", err)
 
@@ -108,9 +108,9 @@ func (us *User_service) Update(ctx context.Context, ID uuid.UUID, User *model.Us
 		logger.Error("Error starting transaction", err)
 	}
 
-	query := "UPDATE tb_user SET username = $1, name_full = $2, password = $3, email = $4, enabled = $5 WHERE id = $6"
+	query := "UPDATE tb_user SET id_tanant = $1, username = $2, name_full = $3, password = $4, email = $5, enabled = $6 WHERE id = $7"
 
-	result, err := tx.ExecContext(ctx, query, User.Username, User.Name, User.Password, User.Email, User.Enable, ID)
+	result, err := tx.ExecContext(ctx, query, User.TanantID, User.Username, User.Name, User.Password, User.Email, User.Enable, ID)
 	if err != nil {
 		logger.Error("Error updating user", err)
 		return 0
@@ -179,8 +179,8 @@ func (us *User_service) GetExistUserName(ctx context.Context, userName string) (
 	return count > 0, nil // Return true if count is greater than 0
 }
 
-func (us *User_service) GetByCpf(ctx context.Context, Cpf string) (*model.User, error) {
-	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, username, name_full, email, enabled, created_at, updated_at FROM tb_user WHERE username = $1")
+func (us *User_service) GetByEmail(ctx context.Context, email string) (*model.User, error) {
+	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, id_tanant, username, name_full, email, enabled, created_at, updated_at FROM tb_user WHERE username = $1")
 	u := model.User{}
 	if err != nil {
 		logger.Error(err.Error(), err)
@@ -189,7 +189,7 @@ func (us *User_service) GetByCpf(ctx context.Context, Cpf string) (*model.User, 
 
 	defer stmt.Close()
 
-	if err := stmt.QueryRowContext(ctx, Cpf).Scan(&u.ID, &u.Username, &u.Name, &u.Email, &u.Enable, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	if err := stmt.QueryRowContext(ctx, email).Scan(&u.ID, &u.TanantID, &u.Username, &u.Name, &u.Email, &u.Enable, &u.CreatedAt, &u.UpdatedAt); err != nil {
 		logger.Error(err.Error(), err)
 		return &u, err
 	}
@@ -200,7 +200,7 @@ func (us *User_service) GetByCpf(ctx context.Context, Cpf string) (*model.User, 
 func (us *User_service) Authenticate(username, password string) (*model.User, error) {
 	ctx := context.Background() // Ou use um contexto relevante
 
-	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, username, name_full , email, enabled, hashed_password, created_at, updated_at FROM tb_user WHERE username = $1")
+	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, id_tanant, username, name_full , email, enabled, hashed_password, created_at, updated_at FROM tb_user WHERE username = $1")
 	if err != nil {
 		logger.Error(err.Error(), err)
 		return nil, err
@@ -210,7 +210,7 @@ func (us *User_service) Authenticate(username, password string) (*model.User, er
 	u := &model.User{}
 	var hashedPassword string
 
-	if err := stmt.QueryRowContext(ctx, username).Scan(&u.ID, &u.Username, &u.Name, &u.Email, &u.Enable, &hashedPassword, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	if err := stmt.QueryRowContext(ctx, username).Scan(&u.ID, &u.TanantID, &u.Username, &u.Name, &u.Email, &u.Enable, &hashedPassword, &u.CreatedAt, &u.UpdatedAt); err != nil {
 		logger.Error(err.Error(), err)
 		return nil, errors.New("invalid username or password")
 	}

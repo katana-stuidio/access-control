@@ -12,6 +12,7 @@ import (
 
 type User struct {
 	ID             uuid.UUID `json:"id"`
+	TanantID       uuid.UUID `json:"tenant_id"`
 	Username       string    `json:"username"`
 	Name           string    `json:"name"`
 	Password       string    `json:"password"`
@@ -73,13 +74,14 @@ func (u *User) PrepareToSave() {
 func NewUser(user_request *User) (*User, error) {
 	user := &User{
 		ID:             uuid.New(),
+		TanantID:       user_request.TanantID,
 		Username:       user_request.Username,
 		Name:           user_request.Name,
 		Password:       user_request.Password,
 		HashedPassword: user_request.HashedPassword,
-		Email:          user_request.Username + "@mpla.com.br",
+		Email:          user_request.Username,
 		Enable:         true,
-		Role:           "driver",
+		Role:           "user",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
