@@ -36,6 +36,16 @@ var ErroHttpMsgUserEmailIsRequired = HttpMsg{
 	Code:    http.StatusBadRequest,
 }
 
+// @Summary Get all users
+// @Description Get a paginated list of all users
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param limit query int false "Number of items per page (default: 10)"
+// @Param page query int false "Page number (default: 1)"
+// @Success 200 {object} model.Paginate
+// @Failure 500 {object} handler.HttpMsg
+// @Router /api/v1/user/ [get]
 func getAllUser(service user.UserServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		limit := int64(10) // default limit
@@ -50,6 +60,16 @@ func getAllUser(service user.UserServiceInterface) gin.HandlerFunc {
 	}
 }
 
+// @Summary Get user by ID
+// @Description Get a user by their ID
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} model.User
+// @Failure 400 {object} handler.HttpMsg
+// @Failure 404 {object} handler.HttpMsg
+// @Router /api/v1/user/{id} [get]
 func getUser(service user.UserServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		externalID := c.Param("id")
@@ -69,6 +89,16 @@ func getUser(service user.UserServiceInterface) gin.HandlerFunc {
 	}
 }
 
+// @Summary Create a new user
+// @Description Create a new user with the provided details
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body dto.UserRequestDtoInput true "User details"
+// @Success 201 {object} dto.UserRequestDtoOutPut
+// @Failure 400 {object} handler.HttpMsg
+// @Failure 500 {object} handler.HttpMsg
+// @Router /api/v1/user/ [post]
 func createUser(service user.UserServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var userDto dto.UserRequestDtoInput
@@ -183,6 +213,18 @@ func createUser(service user.UserServiceInterface) gin.HandlerFunc {
 	}
 }
 
+// @Summary Update user
+// @Description Update an existing user's details
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Param user body model.User true "User details"
+// @Success 200 {object} model.User
+// @Failure 400 {object} handler.HttpMsg
+// @Failure 404 {object} handler.HttpMsg
+// @Failure 500 {object} handler.HttpMsg
+// @Router /api/v1/user/{id} [patch]
 func updateUser(service user.UserServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		externalID := c.Param("id")
@@ -229,6 +271,17 @@ func updateUser(service user.UserServiceInterface) gin.HandlerFunc {
 	}
 }
 
+// @Summary Delete user
+// @Description Delete a user by their ID
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} handler.HttpMsg
+// @Failure 400 {object} handler.HttpMsg
+// @Failure 404 {object} handler.HttpMsg
+// @Failure 500 {object} handler.HttpMsg
+// @Router /api/v1/user/{id} [delete]
 func deleteUser(service user.UserServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		externalID := c.Param("id")
@@ -254,6 +307,17 @@ func deleteUser(service user.UserServiceInterface) gin.HandlerFunc {
 	}
 }
 
+// @Summary Get JWT token
+// @Description Authenticate user and get JWT token
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param credentials body dto.LoginRequest true "Login credentials"
+// @Success 200 {object} jwt.TokenDetails
+// @Failure 400 {object} handler.HttpMsg
+// @Failure 401 {object} handler.HttpMsg
+// @Failure 500 {object} handler.HttpMsg
+// @Router /api/v1/user/getjwt [post]
 func getJWT(service user.UserServiceInterface, conf *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var loginRequest dto.LoginRequest
@@ -282,6 +346,15 @@ func getJWT(service user.UserServiceInterface, conf *config.Config) gin.HandlerF
 	}
 }
 
+// @Summary Validate JWT token
+// @Description Validate a JWT token
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Success 200 {object} jwt.Claims
+// @Failure 401 {object} handler.HttpMsg
+// @Router /api/v1/user/validatejwt [post]
 func validateToken(conf *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -307,6 +380,15 @@ func validateToken(conf *config.Config) gin.HandlerFunc {
 	}
 }
 
+// @Summary Refresh JWT token
+// @Description Refresh an expired JWT token
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {refresh_token}"
+// @Success 200 {object} jwt.TokenDetails
+// @Failure 401 {object} handler.HttpMsg
+// @Router /api/v1/user/refreshjwt [post]
 func refreshToken(conf *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -332,6 +414,16 @@ func refreshToken(conf *config.Config) gin.HandlerFunc {
 	}
 }
 
+// @Summary Change user password
+// @Description Change a user's password
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body dto.UserChangePasswordOutPut true "Password change details"
+// @Success 200 {object} handler.HttpMsg
+// @Failure 400 {object} handler.HttpMsg
+// @Failure 500 {object} handler.HttpMsg
+// @Router /api/v1/user/changepassword [patch]
 func changePassword(service user.UserServiceInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var userChange dto.UserChangePasswordOutPut

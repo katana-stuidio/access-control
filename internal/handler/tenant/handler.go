@@ -63,14 +63,14 @@ func getAllTenant(service tenant.TenantServiceInterface) http.Handler {
 // @Tags tenants
 // @Accept json
 // @Produce json
-// @Param id header string true "Tenant ID"
+// @Param id path string true "Tenant ID"
 // @Success 200 {object} dto.TenantRequestDtoOutPut
 // @Failure 400 {object} handler.HttpMsg
 // @Failure 404 {object} handler.HttpMsg
 // @Router /api/v1/tenant/{id} [get]
 func getTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		externalID := r.Header.Get("id")
+		externalID := r.URL.Query().Get("id")
 		id, err := uuid.Parse(externalID)
 		if err != nil {
 			ErroHttpMsgTenantIdIsRequired.Write(w)
@@ -185,7 +185,7 @@ func createTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
 // @Tags tenants
 // @Accept json
 // @Produce json
-// @Param id header string true "Tenant ID"
+// @Param id path string true "Tenant ID"
 // @Param tenant body model.Tenant true "Tenant details"
 // @Success 200 {object} model.Tenant
 // @Failure 400 {object} handler.HttpMsg
@@ -194,7 +194,7 @@ func createTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
 // @Router /api/v1/tenant/{id} [patch]
 func updateTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		externalID := r.Header.Get("id")
+		externalID := r.URL.Query().Get("id")
 		id, err := uuid.Parse(externalID)
 		if err != nil {
 			ErroHttpMsgTenantIdIsRequired.Write(w)
@@ -243,7 +243,7 @@ func updateTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
 // @Tags tenants
 // @Accept json
 // @Produce json
-// @Param id header string true "Tenant ID"
+// @Param id path string true "Tenant ID"
 // @Success 200 {object} handler.HttpMsg
 // @Failure 400 {object} handler.HttpMsg
 // @Failure 404 {object} handler.HttpMsg
@@ -251,7 +251,7 @@ func updateTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
 // @Router /api/v1/tenant/{id} [delete]
 func deleteTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		externalID := r.Header.Get("id")
+		externalID := r.URL.Query().Get("id")
 		id, err := uuid.Parse(externalID)
 		if err != nil {
 			ErroHttpMsgTenantIdIsRequired.Write(w)
