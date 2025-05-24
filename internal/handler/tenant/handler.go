@@ -1,168 +1,274 @@
 package tenant
 
 import (
+	"encoding/json"
 	"net/http"
-	"strings"
+	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
 	"github.com/katana-stuidio/access-control/internal/config/logger"
 	"github.com/katana-stuidio/access-control/internal/dto"
 	"github.com/katana-stuidio/access-control/pkg/model"
 	"github.com/katana-stuidio/access-control/pkg/service/tenant"
 )
 
-func getAllTenant(service tenant.TenantServiceInterface) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		Tenants := service.GetAll(c.Request.Context())
-		c.JSON(http.StatusOK, Tenants)
-	}
+// @Summary Get all tenants
+// @Description Get a paginated list of all tenants
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Param limit query int false "Number of items per page (default: 10)"
+// @Param page query int false "Page number (default: 1)"
+// @Success 200 {object} model.Paginate
+// @Failure 500 {object} handler.HttpMsg
+// @Router /api/v1/tenant/ [get]
+func getAllTenant(service tenant.TenantServiceInterface) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get pagination parameters from query string
+		limitStr := r.URL.Query().Get("limit")
+		pageStr := r.URL.Query().Get("page")
+
+		// Convert to int64 with defaults
+		limit := int64(10) // default limit
+		page := int64(1)   // default page
+
+		if limitStr != "" {
+			if l, err := strconv.ParseInt(limitStr, 10, 64); err == nil && l > 0 {
+				limit = l
+			}
+		}
+		if pageStr != "" {
+			if p, err := strconv.ParseInt(pageStr, 10, 64); err == nil && p > 0 {
+				page = p
+			}
+		}
+
+		result, err := service.GetAll(r.Context(), limit, page)
+		if err != nil {
+			ErroHttpMsgToConvertingResponseTenantListToJson.Write(w)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			ErroHttpMsgToConvertingResponseTenantListToJson.Write(w)
+			return
+		}
+	})
 }
 
-func getTenant(service tenant.TenantServiceInterface) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		externalID := c.Param("id")
+// @Summary Get tenant by ID
+// @Description Get a tenant by their ID
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Param id header string true "Tenant ID"
+// @Success 200 {object} dto.TenantRequestDtoOutPut
+// @Failure 400 {object} handler.HttpMsg
+// @Failure 404 {object} handler.HttpMsg
+// @Router /api/v1/tenant/{id} [get]
+func getTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		externalID := r.Header.Get("id")
 		id, err := uuid.Parse(externalID)
-		if err != nil || id == uuid.Nil {
-			ErroHttpMsgTenantIdIsRequired.Write(c.Writer)
+		if err != nil {
+			ErroHttpMsgTenantIdIsRequired.Write(w)
 			return
 		}
 
-		Tenant := service.GetByID(c.Request.Context(), id)
-		if Tenant.ID == uuid.Nil {
-			ErroHttpMsgTenantNotFound.Write(c.Writer)
+		if id == uuid.Nil {
+			ErroHttpMsgTenantIdIsRequired.Write(w)
 			return
 		}
 
-		c.JSON(http.StatusOK, Tenant)
+		tenant := service.GetByID(r.Context(), id)
+		if tenant.ID == uuid.Nil {
+			ErroHttpMsgTenantNotFound.Write(w)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(tenant)
+		if err != nil {
+			ErroHttpMsgToParseResponseTenantToJson.Write(w)
+			return
+		}
 	}
 }
 
-func createTenant(service tenant.TenantServiceInterface) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var TenantDto dto.TenantRequestDtoInput
+// @Summary Create a new tenant
+// @Description Create a new tenant with the provided details
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Param tenant body dto.TenantRequestDtoInput true "Tenant details"
+// @Success 201 {object} dto.TenantRequestDtoOutPut
+// @Failure 400 {object} handler.HttpMsg
+// @Failure 500 {object} handler.HttpMsg
+// @Router /api/v1/tenant/ [post]
+func createTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tenantDto := dto.TenantRequestDtoInput{}
 
-		if err := c.ShouldBindJSON(&TenantDto); err != nil {
-			logger.Error("Invalid Tenant request: ", err)
-			ErroHttpMsgToParseRequestTenantToJson.Write(c.Writer)
-			return
-		}
-
-		TenantModel := model.Tenant{
-
-			Name:       TenantDto.Name,
-			SchemaName: TenantDto.SchemaName,
-		}
-
-		tn, err := model.NewTenant(&TenantModel)
+		err := json.NewDecoder(r.Body).Decode(&tenantDto)
 		if err != nil {
-			logger.Error("Invalid login request: ", err)
-			ErroHttpMsgToParseRequestTenantToJson.Write(c.Writer)
+			logger.Error("Invalid tenant request: ", err)
+			ErroHttpMsgToParseRequestTenantToJson.Write(w)
 			return
 		}
 
-		if strings.TrimSpace(tn.Name) == "" {
-			ErroHttpMsgTenantNameIsRequired.Write(c.Writer)
-			return
-		}
+		var tenantModel model.Tenant
+		tenantModel.Name = tenantDto.Name
+		tenantModel.CNPJ = tenantDto.CNPJ
 
-		if strings.TrimSpace(tn.SchemaName) == "" {
-			ErroHttpMsgTenantSchemaNameIsRequired.Write(c.Writer)
-			return
-		}
-
-		TenantExist, err := service.GetExistTenantName(c.Request.Context(), tn.Name)
+		tenantCad, err := model.NewTenant(&tenantModel)
 		if err != nil {
-			ErroHttpMsgToInsertTenant.Write(c.Writer)
+			logger.Error("Invalid tenant request: ", err)
+			ErroHttpMsgToParseRequestTenantToJson.Write(w)
 			return
 		}
 
-		if TenantExist {
-			ErroHttpMsgTenantAlreadyExist.Write(c.Writer)
+		if tenantCad.Name == " " || tenantCad.Name == "" {
+			ErroHttpMsgTenantNameIsRequired.Write(w)
 			return
 		}
 
-		result, err := service.Create(c.Request.Context(), tn)
+		if tenantCad.CNPJ == " " || tenantCad.CNPJ == "" {
+			ErroHttpMsgTenantCNPJIsRequired.Write(w)
+			return
+		}
+
+		if !tenantCad.CheckCNPJ(tenantCad.CNPJ) {
+			ErroHttpMsgTenantCNPJIsInvalid.Write(w)
+			return
+		}
+
+		tenantExist, err := service.GetExistCNPJ(r.Context(), tenantCad.CNPJ)
 		if err != nil {
-			ErroHttpMsgToInsertTenant.Write(c.Writer)
+			ErroHttpMsgToInsertTenant.Write(w)
 			return
 		}
 
-		resultOut := dto.TenantRequestDtoOutPut{
-			ID:         result.ID,
-			Name:       result.Name,
-			SchemaName: result.SchemaName,
-			IsActive:   result.IsActive,
-			CreatedAt:  result.CreatedAt,
-			UpdatedAt:  result.UpdatedAt,
+		if tenantExist {
+			ErroHttpMsgTenantAlreadyExist.Write(w)
+			return
+		}
+		tenantCad.ID = uuid.New()
+		tenantCad.SchemaName = tenantCad.ID.String()
+		result, err := service.Create(r.Context(), tenantCad)
+		if err != nil {
+			ErroHttpMsgToInsertTenant.Write(w)
+			return
 		}
 
-		c.JSON(http.StatusCreated, resultOut)
+		var resultOut dto.TenantRequestDtoOutPut
+		resultOut.ID = result.ID
+		resultOut.Name = result.Name
+		resultOut.CNPJ = result.CNPJ
+		resultOut.SchemaName = result.SchemaName
+		resultOut.IsActive = result.IsActive
+		resultOut.CreatedAt = result.CreatedAt
+		resultOut.UpdatedAt = result.UpdatedAt
+
+		w.WriteHeader(http.StatusCreated)
+
+		err = json.NewEncoder(w).Encode(resultOut)
+		if err != nil {
+			ErroHttpMsgToParseResponseTenantToJson.Write(w)
+			return
+		}
 	}
 }
 
-func updateTenant(service tenant.TenantServiceInterface) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		externalID := c.Param("id")
+// @Summary Update tenant
+// @Description Update an existing tenant's details
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Param id header string true "Tenant ID"
+// @Param tenant body model.Tenant true "Tenant details"
+// @Success 200 {object} model.Tenant
+// @Failure 400 {object} handler.HttpMsg
+// @Failure 404 {object} handler.HttpMsg
+// @Failure 500 {object} handler.HttpMsg
+// @Router /api/v1/tenant/{id} [patch]
+func updateTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		externalID := r.Header.Get("id")
 		id, err := uuid.Parse(externalID)
-		if err != nil || id == uuid.Nil {
-			ErroHttpMsgTenantIdIsRequired.Write(c.Writer)
+		if err != nil {
+			ErroHttpMsgTenantIdIsRequired.Write(w)
 			return
 		}
 
-		var requestToUpdate model.Tenant
-		if err := c.ShouldBindJSON(&requestToUpdate); err != nil {
-			ErroHttpMsgToParseRequestTenantToJson.Write(c.Writer)
+		if id == uuid.Nil {
+			ErroHttpMsgTenantIdIsRequired.Write(w)
 			return
 		}
 
-		if strings.TrimSpace(requestToUpdate.Name) == "" {
-			ErroHttpMsgTenantNameIsRequired.Write(c.Writer)
+		request_to_update_tenant := model.Tenant{}
+		err = json.NewDecoder(r.Body).Decode(&request_to_update_tenant)
+		if err != nil {
+			ErroHttpMsgToParseRequestTenantToJson.Write(w)
 			return
 		}
 
-		if strings.TrimSpace(requestToUpdate.Name) == "" {
-			ErroHttpMsgTenantNameIsRequired.Write(c.Writer)
+		if request_to_update_tenant.Name == " " || request_to_update_tenant.Name == "" {
+			ErroHttpMsgTenantNameIsRequired.Write(w)
 			return
 		}
 
-		Tenant := service.GetByID(c.Request.Context(), id)
-		if Tenant.ID == uuid.Nil {
-			ErroHttpMsgTenantNotFound.Write(c.Writer)
+		if request_to_update_tenant.CNPJ == " " || request_to_update_tenant.CNPJ == "" {
+			ErroHttpMsgTenantCNPJIsRequired.Write(w)
 			return
 		}
 
-		rowsAffected := service.Update(c.Request.Context(), id, &requestToUpdate)
+		if !request_to_update_tenant.CheckCNPJ(request_to_update_tenant.CNPJ) {
+			ErroHttpMsgTenantCNPJIsInvalid.Write(w)
+			return
+		}
+
+		rowsAffected := service.Update(r.Context(), id, &request_to_update_tenant)
 		if rowsAffected == 0 {
-			ErroHttpMsgToUpdateTenant.Write(c.Writer)
+			ErroHttpMsgToUpdateTenant.Write(w)
 			return
 		}
 
-		c.JSON(http.StatusOK, requestToUpdate)
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func deleteTenant(service tenant.TenantServiceInterface) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		externalID := c.Param("id")
+// @Summary Delete tenant
+// @Description Delete a tenant by their ID
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Param id header string true "Tenant ID"
+// @Success 200 {object} handler.HttpMsg
+// @Failure 400 {object} handler.HttpMsg
+// @Failure 404 {object} handler.HttpMsg
+// @Failure 500 {object} handler.HttpMsg
+// @Router /api/v1/tenant/{id} [delete]
+func deleteTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		externalID := r.Header.Get("id")
 		id, err := uuid.Parse(externalID)
-		if err != nil || id == uuid.Nil {
-			ErroHttpMsgTenantIdIsRequired.Write(c.Writer)
+		if err != nil {
+			ErroHttpMsgTenantIdIsRequired.Write(w)
 			return
 		}
 
-		Tenant := service.GetByID(c.Request.Context(), id)
-		if Tenant.ID == uuid.Nil {
-			ErroHttpMsgTenantNotFound.Write(c.Writer)
+		if id == uuid.Nil {
+			ErroHttpMsgTenantIdIsRequired.Write(w)
 			return
 		}
 
-		rowsAffected := service.Delete(c.Request.Context(), id)
+		rowsAffected := service.Delete(r.Context(), id)
 		if rowsAffected == 0 {
-			ErroHttpMsgToDeleteTenant.Write(c.Writer)
+			ErroHttpMsgToDeleteTenant.Write(w)
 			return
 		}
 
-		SuccessHttpMsgToDeleteTenant.Write(c.Writer)
+		SuccessHttpMsgToDeleteTenant.Write(w)
 	}
 }

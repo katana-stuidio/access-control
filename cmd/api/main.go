@@ -7,9 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/katana-stuidio/access-control/internal/config"
 	"github.com/katana-stuidio/access-control/internal/config/logger"
+	hand_ten "github.com/katana-stuidio/access-control/internal/handler/tenant"
 	hand_usr "github.com/katana-stuidio/access-control/internal/handler/user"
 	"github.com/katana-stuidio/access-control/pkg/adapter/pgsql"
 	"github.com/katana-stuidio/access-control/pkg/server"
+	service_ten "github.com/katana-stuidio/access-control/pkg/service/tenant"
 	service_usr "github.com/katana-stuidio/access-control/pkg/service/user"
 )
 
@@ -25,6 +27,7 @@ func main() {
 	conn_pg := pgsql.New(conf)
 
 	usr_service := service_usr.NewUserService(conn_pg)
+	tenat_service := service_ten.NewTenantService(conn_pg)
 
 	// Criação do router com Gin
 	router := gin.Default()
@@ -39,6 +42,7 @@ func main() {
 
 	// Registra handlers do módulo user
 	hand_usr.RegisterUserAPIHandlers(router, usr_service, conf)
+	hand_ten.RegisterTenantAPIHandlers(router, tenat_service)
 
 	// Cria servidor HTTP
 	srv := server.NewHTTPServer(router, conf)

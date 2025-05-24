@@ -13,9 +13,10 @@ func RegisterUserAPIHandlers(r *gin.Engine, service user.UserServiceInterface, c
 		userGroup.GET("/:id", getUser(service))
 		userGroup.POST("/getjwt", getJWT(service, conf))
 		userGroup.POST("/refreshjwt", refreshToken(conf))
-		userGroup.GET("/validatejwt", validateToken(conf))
+		userGroup.POST("/validatejwt", validateToken(conf))
 		userGroup.PATCH("/:id", updateUser(service))
 		userGroup.DELETE("/:id", deleteUser(service))
 		userGroup.GET("/", getAllUser(service))
+		userGroup.PATCH("/changepassword", gin.WrapH(changePassword(service)))
 	}
 }

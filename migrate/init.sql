@@ -2,9 +2,10 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Tabela de Tenants
-CREATE TABLE public.tenants (
+CREATE TABLE public.tb_tenant (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(50) NOT NULL,
+    cnpj VARCHAR(20) NOT NULL UNIQUE,
     schema_name VARCHAR(200) NOT NULL UNIQUE,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT now(),
@@ -28,7 +29,10 @@ CREATE TABLE public.tb_user (
     CONSTRAINT tb_user_username_unique UNIQUE (username),
     CONSTRAINT tb_user_email_unique UNIQUE (email),
     CONSTRAINT fk_user_tenant FOREIGN KEY (id_tanant)
-        REFERENCES public.tenants(id)
+        REFERENCES public.tenant(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
+
+
+ERROR:  relation "tenant" does not exist 

@@ -6,13 +6,12 @@ import (
 )
 
 func RegisterTenantAPIHandlers(r *gin.Engine, service tenant.TenantServiceInterface) {
-	TenantGroup := r.Group("/api/v1/Tenant")
+	tenantGroup := r.Group("/api/v1/Tenant")
 	{
-		TenantGroup.POST("/", createTenant(service))
-		TenantGroup.GET("/:id", getTenant(service))
-
-		TenantGroup.PATCH("/:id", updateTenant(service))
-		TenantGroup.DELETE("/:id", deleteTenant(service))
-		TenantGroup.GET("/", getAllTenant(service))
+		tenantGroup.POST("/", gin.WrapH(createTenant(service)))
+		tenantGroup.GET("/:id", gin.WrapH(getTenant(service)))
+		tenantGroup.PATCH("/:id", gin.WrapH(updateTenant(service)))
+		tenantGroup.DELETE("/:id", gin.WrapH(deleteTenant(service)))
+		tenantGroup.GET("/", gin.WrapH(getAllTenant(service)))
 	}
 }

@@ -1,0 +1,14 @@
+# Configurações do servidor
+SRV_PORT=8080
+SRV_MODE=DEVELOPER
+
+# JWT
+SRV_JWT_SECRET_KEY=LinuxRust162!
+SRV_JWT_TOKEN_EXP=5          # 5 minutos
+SRV_JWT_REFRESH_EXP=30       # 30 minutos
+
+# Banco de dados PostgreSQL
+PGSQL_DB_NAME=katana_studiodb_user
+PGSQL_DB_USER=postgres
+PGSQL_DB_PASSWORD=supersenha
+PGSQL_DB_PORT=5432

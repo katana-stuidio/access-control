@@ -18,6 +18,8 @@ type TokenDetails struct {
 
 type Claims struct {
 	Username    string `json:"username"`
+	UserID      string `json:"user_id"`
+	TenantID    string `json:"tenant_id"`
 	FirstAccess bool   `json:"first_access"`
 	Renew       bool   `json:"renew,omitempty"`
 	jwt.RegisteredClaims
@@ -31,6 +33,8 @@ func GenerateToken(user *model.User, conf *config.Config) (*TokenDetails, error)
 	accessExpiration := time.Now().Add(time.Duration(conf.JWTTokenExp) * time.Minute)
 	accessClaims := &Claims{
 		Username: user.Username,
+		UserID:   user.ID.String(),
+		TenantID: user.TenantID.String(),
 		Renew:    false,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessExpiration),
@@ -46,6 +50,8 @@ func GenerateToken(user *model.User, conf *config.Config) (*TokenDetails, error)
 	refreshExpiration := time.Now().Add(time.Duration(conf.JWTRefreshExp) * time.Minute)
 	refreshClaims := &Claims{
 		Username: user.Username,
+		UserID:   user.ID.String(),
+		TenantID: user.TenantID.String(),
 		Renew:    true,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(refreshExpiration),

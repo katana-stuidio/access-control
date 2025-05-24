@@ -12,7 +12,19 @@ Uma API de **autenticação e autorização** desenvolvida em **Golang**, utiliz
 - 🔑 **JWT (JSON Web Token)** – Gerenciamento de autenticação
 
 ---
+## 🚀 Rodar local 
+# Configurações do servidor
+export SRV_PORT=8080
+export SRV_MODE=DEVELOPER
+export SRV_JWT_SECRET_KEY=LinuxRust162!
+export SRV_JWT_TOKEN_EXP=5          # 5 minutos
+export SRV_JWT_REFRESH_EXP=30       # 30 minutos
+export SRV_DB_HOST=0.0.0.0  
+export SRV_DB_USER=postgres
+export SRV_DB_PASS=supersenha
+export SRV_DB_NAME=katana_db
 
+  
 ## 📁 Estrutura Geral
 
 ```bash

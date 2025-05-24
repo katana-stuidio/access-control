@@ -49,6 +49,11 @@ var ErroHttpMsgUserCpfIsInvalid handler.HttpMsg = handler.HttpMsg{
 	Code: http.StatusBadRequest,
 }
 
+var ErroHttpMsgUserCnpjIsInvalid handler.HttpMsg = handler.HttpMsg{
+	Msg:  "Erro User CNPJ is invalid",
+	Code: http.StatusBadRequest,
+}
+
 var ErroHttpMsgUserNotFound handler.HttpMsg = handler.HttpMsg{
 	Msg:  "Erro User Not Found",
 	Code: http.StatusNotFound,
@@ -82,4 +87,9 @@ var ErroHttpMsgToUpdateUser handler.HttpMsg = handler.HttpMsg{
 var ErroHttpMsgToDeleteUser handler.HttpMsg = handler.HttpMsg{
 	Msg:  "Erro to Delete the User",
 	Code: http.StatusInternalServerError,
+}
+
+var ErroHttpMsgCNPJNotFound handler.HttpMsg = handler.HttpMsg{
+	Msg:  "Erro CNPJ Not Found",
+	Code: http.StatusNotFound,
 }

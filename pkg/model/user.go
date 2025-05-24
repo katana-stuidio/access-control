@@ -12,20 +12,18 @@ import (
 
 type User struct {
 	ID             uuid.UUID `json:"id"`
-	TanantID       uuid.UUID `json:"tenant_id"`
+	TenantID       uuid.UUID `json:"tenant_id"`
+	CNPJ           string    `json:"cnpj"`
 	Username       string    `json:"username"`
 	Name           string    `json:"name"`
 	Password       string    `json:"password"`
 	HashedPassword string    `json:"hashed_password"`
 	Email          string    `json:"email"`
 	Enable         bool      `json:"enable"`
+	ChangePassword bool      `json:"change_password"`
 	Role           string    `bson:"role" json:"role"`
 	CreatedAt      time.Time `json:"created_at,omitempty"`
 	UpdatedAt      time.Time `json:"updated_at,omitempty"`
-}
-
-type UserList struct {
-	List []*User `json:"list"`
 }
 
 func (u *User) passwordToHash() {
@@ -58,6 +56,16 @@ func (u *User) CheckCpf(cpf string) bool {
 	return true
 }
 
+func (u *User) CheckCNPJ(cnpj string) bool {
+	err := brazilcode.CNHIsValid(cnpj)
+	if err != nil {
+		logger.Error("Erro CNPJ invalido", err)
+		return false
+	}
+
+	return true
+}
+
 func (u *User) PrepareToSave() {
 	dt := time.Now()
 
@@ -74,14 +82,15 @@ func (u *User) PrepareToSave() {
 func NewUser(user_request *User) (*User, error) {
 	user := &User{
 		ID:             uuid.New(),
-		TanantID:       user_request.TanantID,
+		CNPJ:           user_request.CNPJ,
 		Username:       user_request.Username,
 		Name:           user_request.Name,
 		Password:       user_request.Password,
 		HashedPassword: user_request.HashedPassword,
-		Email:          user_request.Username,
+		Email:          user_request.Email,
 		Enable:         true,
-		Role:           "user",
+		ChangePassword: true,
+		Role:           "driver",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}

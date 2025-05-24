@@ -1,6 +1,7 @@
 package user
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -12,11 +13,39 @@ import (
 	"github.com/katana-stuidio/access-control/pkg/jwt"
 	"github.com/katana-stuidio/access-control/pkg/model"
 	"github.com/katana-stuidio/access-control/pkg/service/user"
+	"github.com/potatowski/brazilcode"
 )
+
+type HttpMsg struct {
+	Message string
+	Code    int
+}
+
+var SuccessHttpMsgToChangePassword = HttpMsg{
+	Message: "Password changed successfully",
+	Code:    http.StatusOK,
+}
+
+var ErroHttpMsgUserEmailAlreadyExists = HttpMsg{
+	Message: "Email already exists",
+	Code:    http.StatusBadRequest,
+}
+
+var ErroHttpMsgUserEmailIsRequired = HttpMsg{
+	Message: "Email is required",
+	Code:    http.StatusBadRequest,
+}
 
 func getAllUser(service user.UserServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		users := service.GetAll(c.Request.Context())
+		limit := int64(10) // default limit
+		page := int64(1)   // default page
+
+		users, err := service.GetAll(c.Request.Context(), limit, page)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusOK, users)
 	}
 }
@@ -51,9 +80,53 @@ func createUser(service user.UserServiceInterface) gin.HandlerFunc {
 		}
 
 		userModel := model.User{
-			Username: userDto.Username,
 			Name:     userDto.Name,
+			Username: userDto.Username,
 			Password: userDto.Password,
+			CNPJ:     userDto.CNPJ,
+			Email:    userDto.Email,
+		}
+
+		if userDto.CNPJ == "" {
+			ErroHttpMsgToInsertUser.Write(c.Writer)
+			return
+		}
+		if err := brazilcode.CNPJIsValid(userDto.CNPJ); err != nil {
+			ErroHttpMsgUserCnpjIsInvalid.Write(c.Writer)
+			return
+		}
+
+		if userDto.Email == "" {
+			c.JSON(ErroHttpMsgUserEmailIsRequired.Code, ErroHttpMsgUserEmailIsRequired)
+			return
+		}
+		logger.Info("Email: " + userDto.Email)
+		emailExist, err := service.EmailExists(c.Request.Context(), userDto.Email)
+		if err != nil {
+			ErroHttpMsgToInsertUser.Write(c.Writer)
+			return
+		}
+
+		if emailExist {
+			c.JSON(ErroHttpMsgUserEmailAlreadyExists.Code, ErroHttpMsgUserEmailAlreadyExists)
+			return
+		}
+
+		tenant_id, err := service.GetByCNPJ(c.Request.Context(), userDto.CNPJ)
+		if err != nil {
+			ErroHttpMsgCNPJNotFound.Write(c.Writer)
+			return
+		}
+
+		if tenant_id == "" {
+			ErroHttpMsgToInsertUser.Write(c.Writer)
+			return
+		}
+
+		tenantUUID, err := uuid.Parse(tenant_id)
+		if err != nil {
+			ErroHttpMsgToInsertUser.Write(c.Writer)
+			return
 		}
 
 		usrCad, err := model.NewUser(&userModel)
@@ -68,11 +141,6 @@ func createUser(service user.UserServiceInterface) gin.HandlerFunc {
 			return
 		}
 
-		if !usrCad.CheckCpf(usrCad.Username) {
-			ErroHttpMsgUserCpfIsInvalid.Write(c.Writer)
-			return
-		}
-
 		if strings.TrimSpace(usrCad.Name) == "" {
 			ErroHttpMsgUserNameIsRequired.Write(c.Writer)
 			return
@@ -82,6 +150,8 @@ func createUser(service user.UserServiceInterface) gin.HandlerFunc {
 			ErroHttpMsgUserPasswordIsRequired.Write(c.Writer)
 			return
 		}
+
+		usrCad.TenantID = tenantUUID
 
 		userExist, err := service.GetExistUserName(c.Request.Context(), usrCad.Username)
 		if err != nil {
@@ -259,5 +329,56 @@ func refreshToken(conf *config.Config) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, tokenDetails)
+	}
+}
+
+func changePassword(service user.UserServiceInterface) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var userChange dto.UserChangePasswordOutPut
+		err := json.NewDecoder(r.Body).Decode(&userChange)
+		if err != nil {
+			logger.Error("Error decoding user change password: ", err)
+			http.Error(w, "Error decoding user change password", http.StatusBadRequest)
+			return
+		}
+
+		if userChange.Username == "" {
+			http.Error(w, "Username is required", http.StatusBadRequest)
+			return
+		}
+
+		if userChange.NewPassowrd == "" || userChange.OldPassowrd == "" {
+			http.Error(w, "New password and confirm password are required", http.StatusBadRequest)
+			return
+		}
+
+		err = service.ChangePassword(r.Context(), userChange.Username, userChange.OldPassowrd, userChange.NewPassowrd)
+		if err != nil {
+			errorMsg := err.Error()
+			if errorMsg == "new password length is too short" ||
+				errorMsg == "new password must contain at least one uppercase letter" ||
+				errorMsg == "new password must contain at least one number" ||
+				errorMsg == "new password must contain at least one symbol" {
+
+				requirements := `Password must meet the following requirements:
+1. At least 8 characters long
+2. At least one uppercase letter
+3. At least one number
+4. At least one special symbol (!@#$%^&*()\-_+=)`
+
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(HttpMsg{
+					Message: requirements,
+					Code:    http.StatusBadRequest,
+				})
+				return
+			}
+			http.Error(w, errorMsg, http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(SuccessHttpMsgToChangePassword.Code)
+		json.NewEncoder(w).Encode(SuccessHttpMsgToChangePassword)
 	}
 }

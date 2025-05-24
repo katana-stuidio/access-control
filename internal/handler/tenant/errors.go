@@ -7,74 +7,68 @@ import (
 )
 
 // Success Message Here
-
 var SuccessHttpMsgToDeleteTenant handler.HttpMsg = handler.HttpMsg{
 	Msg:  "Ok Tenant Deleted",
 	Code: http.StatusOK,
 }
 
-// Erros Message Here
-
-var ErroHttpMsgTenantNameIsRequired handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro Tenant Name is required",
+// Errors Message Here
+var ErroHttpMsgTenantIdIsRequired handler.HttpMsg = handler.HttpMsg{
+	Msg:  "Error Tenant ID is required",
 	Code: http.StatusBadRequest,
 }
-var ErroHttpMsgSchemaNameIsRequired handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro Name is required",
+
+var ErroHttpMsgTenantNameIsRequired handler.HttpMsg = handler.HttpMsg{
+	Msg:  "Error Tenant Name is required",
+	Code: http.StatusBadRequest,
+}
+
+var ErroHttpMsgTenantCNPJIsRequired handler.HttpMsg = handler.HttpMsg{
+	Msg:  "Error Tenant CNPJ is required",
+	Code: http.StatusBadRequest,
+}
+
+var ErroHttpMsgTenantCNPJIsInvalid handler.HttpMsg = handler.HttpMsg{
+	Msg:  "Error Tenant CNPJ is invalid",
 	Code: http.StatusBadRequest,
 }
 
 var ErroHttpMsgTenantAlreadyExist handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro Tenant Already Exist",
-	Code: http.StatusBadRequest,
-}
-
-var ErroHttpMsgTenanIsActiveIsRequired handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro Tenant IsActive is required",
+	Msg:  "Error Tenant Already Exists",
 	Code: http.StatusBadRequest,
 }
 
 var ErroHttpMsgTenantNotFound handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro Tenant Not Found",
+	Msg:  "Error Tenant Not Found",
 	Code: http.StatusNotFound,
 }
 
 var ErroHttpMsgToParseRequestTenantToJson handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro to parse Request Tenant to JSON",
+	Msg:  "Error to parse Request Tenant to JSON",
 	Code: http.StatusInternalServerError,
 }
 
 var ErroHttpMsgToParseResponseTenantToJson handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro to parse Response Tenant to JSON",
+	Msg:  "Error to parse Response Tenant to JSON",
 	Code: http.StatusInternalServerError,
 }
 
 var ErroHttpMsgToConvertingResponseTenantListToJson handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro to converting Response Tenant List to JSON",
+	Msg:  "Error to converting Response Tenant List to JSON",
 	Code: http.StatusInternalServerError,
 }
 
 var ErroHttpMsgToInsertTenant handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro to Insert the Tenant",
+	Msg:  "Error to Insert the Tenant",
 	Code: http.StatusInternalServerError,
 }
 
 var ErroHttpMsgToUpdateTenant handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro to Update the Tenant",
+	Msg:  "Error to Update the Tenant",
 	Code: http.StatusInternalServerError,
 }
 
 var ErroHttpMsgToDeleteTenant handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro to Delete the Tenant",
+	Msg:  "Error to Delete the Tenant",
 	Code: http.StatusInternalServerError,
-}
-
-var ErroHttpMsgTenantIdIsRequired handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro Tenant ID is required",
-	Code: http.StatusBadRequest,
-}
-
-var ErroHttpMsgTenantSchemaNameIsRequired handler.HttpMsg = handler.HttpMsg{
-	Msg:  "Erro Tenant Schema Name is required",
-	Code: http.StatusBadRequest,
 }
