@@ -1,0 +1,11 @@
+name: Project Roadmap
+description: Main project board for tracking development progress
+columns:
+  - name: Backlog
+    description: Features and tasks to be implemented
+  - name: In Progress
+    description: Currently being worked on
+  - name: Review
+    description: Ready for review
+  - name: Done
+    description: Completed items 

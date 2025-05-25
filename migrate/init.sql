@@ -33,6 +33,3 @@ CREATE TABLE public.tb_user (
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
-
-
-ERROR:  relation "tenant" does not exist 
