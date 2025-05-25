@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
@@ -16,10 +16,12 @@ RUN go mod download
 COPY . .
 
 # Build the application
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
 RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/api
 
 # Final stage
-FROM alpine:latest
+FROM --platform=$TARGETPLATFORM alpine:latest
 
 WORKDIR /app
 
