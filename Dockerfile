@@ -29,9 +29,6 @@ RUN apk add --no-cache ca-certificates tzdata
 # Copy the binary from builder
 COPY --from=builder /app/main .
 
-# Copy config files if needed
-COPY --from=builder /app/config ./config
-
 # Expose the application port
 EXPOSE 8080
 
