@@ -34,3 +34,6 @@ export SRV_DB_NAME=katana_db
 ├── pkg/                  # Lógicas reutilizáveis (serviços, modelos, etc.)
 ├── go.mod                # Gerenciador de dependências
 └── README.md             # Documentação do projeto
+https://login-1-vfr6.onrender.com/swagger//index.html
+
+backendkatana@gmail.com
