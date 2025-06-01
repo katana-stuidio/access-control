@@ -244,7 +244,7 @@ func (us *User_service) GetByUserName(ctx context.Context, email string) (*model
 func (us *User_service) Authenticate(username, password string) (*model.User, error) {
 	ctx := context.Background() // Ou use um contexto relevante
 
-	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, id_tanant, username, name_full , email, enabled, hashed_password, created_at, updated_at FROM tb_user WHERE username = $1")
+	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, id_tanant, username, name_full, email, enabled, hashed_password, role_usr, created_at, updated_at FROM tb_user WHERE username = $1")
 	if err != nil {
 		logger.Error(err.Error(), err)
 		return nil, err
@@ -254,7 +254,7 @@ func (us *User_service) Authenticate(username, password string) (*model.User, er
 	u := &model.User{}
 	var hashedPassword string
 
-	if err := stmt.QueryRowContext(ctx, username).Scan(&u.ID, &u.TenantID, &u.Username, &u.Name, &u.Email, &u.Enable, &hashedPassword, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	if err := stmt.QueryRowContext(ctx, username).Scan(&u.ID, &u.TenantID, &u.Username, &u.Name, &u.Email, &u.Enable, &hashedPassword, &u.Role, &u.CreatedAt, &u.UpdatedAt); err != nil {
 		logger.Error(err.Error(), err)
 		return nil, errors.New("invalid username or password")
 	}
