@@ -90,7 +90,7 @@ func NewUser(user_request *User) (*User, error) {
 		Email:          user_request.Email,
 		Enable:         true,
 		ChangePassword: true,
-		Role:           "driver",
+		Role:           user_request.Role,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}

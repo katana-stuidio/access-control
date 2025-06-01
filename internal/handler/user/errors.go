@@ -93,3 +93,8 @@ var ErroHttpMsgCNPJNotFound handler.HttpMsg = handler.HttpMsg{
 	Msg:  "Erro CNPJ Not Found",
 	Code: http.StatusNotFound,
 }
+
+var ErroHttpMsgInvalidRole handler.HttpMsg = handler.HttpMsg{
+	Msg:  "Invalid role. Valid roles are: Professor, Estudante, Instituicao, Admin",
+	Code: http.StatusBadRequest,
+}

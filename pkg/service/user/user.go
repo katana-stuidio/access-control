@@ -53,7 +53,7 @@ func (us *User_service) GetAll(ctx context.Context, limit, page int64) (*model.P
 
 	// Get paginated results
 	query := `
-        SELECT id, cnpj, username, name_full, email, enabled, created_at, updated_at 
+        SELECT id, cnpj, username, name_full, email, enabled, role_usr, created_at, updated_at 
         FROM user 
         ORDER BY created_at DESC 
         LIMIT $1 OFFSET $2`
@@ -76,6 +76,7 @@ func (us *User_service) GetAll(ctx context.Context, limit, page int64) (*model.P
 			&user.Name,
 			&user.Email,
 			&user.Enable,
+			&user.Role,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		); err != nil {
@@ -90,7 +91,7 @@ func (us *User_service) GetAll(ctx context.Context, limit, page int64) (*model.P
 }
 
 func (us *User_service) GetByID(ctx context.Context, ID uuid.UUID) *model.User {
-	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, id_tanant, username, name_full, email, enabled, created_at, updated_at FROM tb_user WHERE id = $1")
+	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, id_tanant, username, name_full, email, enabled, role_usr, created_at, updated_at FROM tb_user WHERE id = $1")
 	if err != nil {
 		logger.Error(err.Error(), err)
 	}
@@ -99,7 +100,7 @@ func (us *User_service) GetByID(ctx context.Context, ID uuid.UUID) *model.User {
 
 	u := model.User{}
 
-	if err := stmt.QueryRowContext(ctx, ID).Scan(&u.ID, &u.TenantID, &u.Username, &u.Name, &u.Email, &u.Enable, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	if err := stmt.QueryRowContext(ctx, ID).Scan(&u.ID, &u.TenantID, &u.Username, &u.Name, &u.Email, &u.Enable, &u.Role, &u.CreatedAt, &u.UpdatedAt); err != nil {
 		logger.Error(err.Error(), err)
 	}
 
@@ -123,9 +124,9 @@ func (us *User_service) Create(ctx context.Context, User *model.User) (*model.Us
 		User.HashedPassword = string(hashedPassword)
 	}
 
-	query := "INSERT INTO tb_user (id, id_tanant, username, name_full, hashed_password, email, enabled) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	query := "INSERT INTO tb_user (id, id_tanant, username, name_full, hashed_password, email, enabled, role_usr) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
 
-	_, err = tx.ExecContext(ctx, query, User.ID, User.TenantID, User.Username, User.Name, User.HashedPassword, User.Email, User.Enable)
+	_, err = tx.ExecContext(ctx, query, User.ID, User.TenantID, User.Username, User.Name, User.HashedPassword, User.Email, User.Enable, User.Role)
 	if err != nil {
 		logger.Error("Error executing SQL query insert user", err)
 		return User, err
@@ -149,9 +150,9 @@ func (us *User_service) Update(ctx context.Context, ID uuid.UUID, User *model.Us
 		logger.Error("Error starting transaction", err)
 	}
 
-	query := "UPDATE tb_user SET id_tanant = $1, username = $2, name_full = $3, password = $4, email = $5, enabled = $6 WHERE id = $7"
+	query := "UPDATE tb_user SET id_tanant = $1, username = $2, name_full = $3, password = $4, email = $5, enabled = $6, role_usr = $7 WHERE id = $8"
 
-	result, err := tx.ExecContext(ctx, query, User.TenantID, User.Username, User.Name, User.Password, User.Email, User.Enable, ID)
+	result, err := tx.ExecContext(ctx, query, User.TenantID, User.Username, User.Name, User.Password, User.Email, User.Enable, User.Role, ID)
 	if err != nil {
 		logger.Error("Error updating user", err)
 		return 0
@@ -221,7 +222,7 @@ func (us *User_service) GetExistUserName(ctx context.Context, userName string) (
 }
 
 func (us *User_service) GetByUserName(ctx context.Context, email string) (*model.User, error) {
-	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, id_tanant, username, name_full, email, enabled, hashed_password, created_at, updated_at FROM tb_user WHERE username = $1")
+	stmt, err := us.dbp.GetDB().PrepareContext(ctx, "SELECT id, id_tanant, username, name_full, email, enabled, hashed_password, role_usr, created_at, updated_at FROM tb_user WHERE username = $1")
 	u := model.User{}
 	if err != nil {
 		logger.Error(err.Error(), err)
@@ -230,7 +231,7 @@ func (us *User_service) GetByUserName(ctx context.Context, email string) (*model
 
 	defer stmt.Close()
 
-	if err := stmt.QueryRowContext(ctx, email).Scan(&u.ID, &u.TenantID, &u.Username, &u.Name, &u.Email, &u.Enable, &u.HashedPassword, &u.CreatedAt, &u.UpdatedAt); err != nil {
+	if err := stmt.QueryRowContext(ctx, email).Scan(&u.ID, &u.TenantID, &u.Username, &u.Name, &u.Email, &u.Enable, &u.HashedPassword, &u.Role, &u.CreatedAt, &u.UpdatedAt); err != nil {
 		logger.Error(err.Error(), err)
 		return &u, err
 	}

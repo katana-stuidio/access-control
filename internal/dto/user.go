@@ -17,6 +17,7 @@ type UserRequestDtoInput struct {
 	Password string `json:"password"`
 	CNPJ     string `json:"cnpj"`
 	Email    string `json:"email"`
+	Role     string `json:"role"`
 }
 
 type UserRequestDtoOutPut struct {

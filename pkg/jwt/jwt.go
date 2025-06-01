@@ -20,6 +20,7 @@ type Claims struct {
 	Username    string `json:"username"`
 	UserID      string `json:"user_id"`
 	TenantID    string `json:"tenant_id"`
+	Role        string `json:"role"`
 	FirstAccess bool   `json:"first_access"`
 	Renew       bool   `json:"renew,omitempty"`
 	jwt.RegisteredClaims
@@ -35,6 +36,7 @@ func GenerateToken(user *model.User, conf *config.Config) (*TokenDetails, error)
 		Username: user.Username,
 		UserID:   user.ID.String(),
 		TenantID: user.TenantID.String(),
+		Role:     user.Role,
 		Renew:    false,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessExpiration),
@@ -52,6 +54,7 @@ func GenerateToken(user *model.User, conf *config.Config) (*TokenDetails, error)
 		Username: user.Username,
 		UserID:   user.ID.String(),
 		TenantID: user.TenantID.String(),
+		Role:     user.Role,
 		Renew:    true,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(refreshExpiration),

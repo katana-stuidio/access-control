@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: supersenha
-      POSTGRES_DB: katana_db
+      POSTGRES_DB: seradb
     volumes:
       - ./tmp_data/postgres_data:/var/lib/postgresql/data
       - ./migrate/init.sql:/docker-entrypoint-initdb.d/init.sql

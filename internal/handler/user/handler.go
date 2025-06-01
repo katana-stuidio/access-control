@@ -21,6 +21,12 @@ type HttpMsg struct {
 	Code    int
 }
 
+func (h HttpMsg) Write(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(h.Code)
+	json.NewEncoder(w).Encode(h)
+}
+
 var SuccessHttpMsgToChangePassword = HttpMsg{
 	Message: "Password changed successfully",
 	Code:    http.StatusOK,
@@ -33,6 +39,11 @@ var ErroHttpMsgUserEmailAlreadyExists = HttpMsg{
 
 var ErroHttpMsgUserEmailIsRequired = HttpMsg{
 	Message: "Email is required",
+	Code:    http.StatusBadRequest,
+}
+
+var ErroHttpMsgUserRoleIsRequired = HttpMsg{
+	Message: "Role is required",
 	Code:    http.StatusBadRequest,
 }
 
@@ -90,7 +101,7 @@ func getUser(service user.UserServiceInterface) gin.HandlerFunc {
 }
 
 // @Summary Create a new user
-// @Description Create a new user with the provided details
+// @Description Create a new user with the provided details. Role must be one of: Professor, Estudante, Instituicao, Admin
 // @Tags users
 // @Accept json
 // @Produce json
@@ -130,6 +141,24 @@ func createUser(service user.UserServiceInterface) gin.HandlerFunc {
 			c.JSON(ErroHttpMsgUserEmailIsRequired.Code, ErroHttpMsgUserEmailIsRequired)
 			return
 		}
+
+		if userDto.Role == "" {
+			ErroHttpMsgUserRoleIsRequired.Write(c.Writer)
+			return
+		}
+
+		validRoles := map[string]bool{
+			"Professor":   true,
+			"Estudante":   true,
+			"Instituicao": true,
+			"Admin":       true,
+		}
+
+		if !validRoles[userDto.Role] {
+			ErroHttpMsgInvalidRole.Write(c.Writer)
+			return
+		}
+
 		logger.Info("Email: " + userDto.Email)
 		emailExist, err := service.EmailExists(c.Request.Context(), userDto.Email)
 		if err != nil {
