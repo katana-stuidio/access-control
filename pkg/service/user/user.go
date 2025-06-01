@@ -124,6 +124,8 @@ func (us *User_service) Create(ctx context.Context, User *model.User) (*model.Us
 		User.HashedPassword = string(hashedPassword)
 	}
 
+	logger.Info("Creating user with role: " + User.Role)
+
 	query := "INSERT INTO tb_user (id, id_tanant, username, name_full, hashed_password, email, enabled, role_usr) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
 
 	_, err = tx.ExecContext(ctx, query, User.ID, User.TenantID, User.Username, User.Name, User.HashedPassword, User.Email, User.Enable, User.Role)

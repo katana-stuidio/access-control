@@ -95,5 +95,6 @@ func NewUser(user_request *User) (*User, error) {
 		UpdatedAt:      time.Now(),
 	}
 
+	user.PrepareToSave()
 	return user, nil
 }

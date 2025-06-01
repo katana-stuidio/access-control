@@ -129,6 +129,8 @@ func createUser(service user.UserServiceInterface) gin.HandlerFunc {
 			Role:     userDto.Role,
 		}
 
+		logger.Info("Received role from request: " + userDto.Role)
+
 		if userDto.CNPJ == "" {
 			ErroHttpMsgToInsertUser.Write(c.Writer)
 			return
