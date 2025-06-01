@@ -21,7 +21,7 @@ type User struct {
 	Email          string    `json:"email"`
 	Enable         bool      `json:"enable"`
 	ChangePassword bool      `json:"change_password"`
-	Role           string    `bson:"role" json:"role"`
+	Role           string    `json:"role"`
 	CreatedAt      time.Time `json:"created_at,omitempty"`
 	UpdatedAt      time.Time `json:"updated_at,omitempty"`
 }
