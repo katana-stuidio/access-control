@@ -26,7 +26,7 @@ type UserRequestDtoOutPut struct {
 	Name      string    `json:"name"`
 	Username  string    `json:"username"`
 	Enable    bool      `json:"enable"`
-	Role      string    `bson:"role" json:"role"`
+	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
