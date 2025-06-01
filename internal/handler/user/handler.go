@@ -126,6 +126,7 @@ func createUser(service user.UserServiceInterface) gin.HandlerFunc {
 			Password: userDto.Password,
 			CNPJ:     userDto.CNPJ,
 			Email:    userDto.Email,
+			Role:     userDto.Role,
 		}
 
 		if userDto.CNPJ == "" {
@@ -234,6 +235,7 @@ func createUser(service user.UserServiceInterface) gin.HandlerFunc {
 			Username:  result.Username,
 			Name:      result.Name,
 			Enable:    result.Enable,
+			Role:      result.Role,
 			CreatedAt: result.CreatedAt,
 			UpdatedAt: result.UpdatedAt,
 		}
