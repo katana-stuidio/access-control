@@ -65,6 +65,5 @@ func main() {
 
 	log.Printf("Server Run on [Port: %s], [Mode: %s], [Version: %s], [Commit: %s]", conf.PORT, conf.Mode, VERSION, COMMIT)
 
-	// Impede o encerramento da aplicação
 	select {}
 }
