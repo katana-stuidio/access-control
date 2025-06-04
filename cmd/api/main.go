@@ -33,13 +33,18 @@ func main() {
 	// Criação do router com Gin
 	router := gin.Default()
 
-	// Configure CORS
-	config := cors.DefaultConfig()
-	config.AllowAllOrigins = true
-	config.AllowHeaders = []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With"}
-	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"}
-	config.ExposeHeaders = []string{"Content-Length"}
-	router.Use(cors.New(config))
+	// Configure CORS with more explicit settings
+	corsConfig := cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization", "X-CSRF-Token", "X-Requested-With", "Accept", "Accept-Encoding", "Accept-Language", "Cache-Control", "Connection", "Cookie", "Host", "Pragma", "Referer", "User-Agent"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false,        // Must be false when using wildcard origin
+		MaxAge:           12 * 60 * 60, // 12 hours
+	})
+
+	// Apply CORS middleware
+	router.Use(corsConfig)
 
 	// Healthcheck básico
 	router.GET("/", func(c *gin.Context) {
