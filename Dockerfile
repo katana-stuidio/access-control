@@ -1,5 +1,5 @@
 # Build stage
-FROM --platform=$BUILDPLATFORM golang:1.21-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -35,4 +35,4 @@ COPY --from=builder /app/main .
 EXPOSE 8080
 
 # Run the application
-CMD ["./main"] 
+CMD ["./main"]
