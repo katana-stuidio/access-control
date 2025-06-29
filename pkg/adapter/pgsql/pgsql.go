@@ -99,17 +99,15 @@ func New(conf *config.Config) *dabase_pool {
 
 	SRV_DB_SSL_MODE := os.Getenv("SRV_DB_SSL_MODE")
 	if SRV_DB_SSL_MODE != "" {
-		conf.SRV_DB_SSL_MODE, _ = strconv.ParseBool(SRV_DB_SSL_MODE)
-	} else {
-		conf.SRV_DB_SSL_MODE = false // SSL Mode false by default
+		conf.SRV_DB_SSL_MODE = SRV_DB_SSL_MODE
 	}
 
 	switch conf.DB_DRIVE {
 	case "postgres":
-		sslMode := "require"
+		sslMode := "require"	
 		if conf.Mode != config.PRODUCTION {
-			if !conf.SRV_DB_SSL_MODE {
-				sslMode = "disable"
+			if conf.SRV_DB_SSL_MODE == "" {
+				sslMode = "require"
 			}
 		}
 

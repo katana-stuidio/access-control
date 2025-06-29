@@ -12,6 +12,7 @@ import (
 	"github.com/katana-stuidio/access-control/internal/dto"
 	"github.com/katana-stuidio/access-control/pkg/jwt"
 	"github.com/katana-stuidio/access-control/pkg/model"
+	"github.com/katana-stuidio/access-control/pkg/service/token"
 	"github.com/katana-stuidio/access-control/pkg/service/user"
 	"github.com/potatowski/brazilcode"
 )
@@ -351,7 +352,7 @@ func deleteUser(service user.UserServiceInterface) gin.HandlerFunc {
 // @Failure 401 {object} handler.HttpMsg
 // @Failure 500 {object} handler.HttpMsg
 // @Router /api/v1/user/getjwt [post]
-func getJWT(service user.UserServiceInterface, conf *config.Config) gin.HandlerFunc {
+func getJWT(service user.UserServiceInterface, conf *config.Config, tokenService token.TokenServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var loginRequest dto.LoginRequest
 
@@ -368,7 +369,7 @@ func getJWT(service user.UserServiceInterface, conf *config.Config) gin.HandlerF
 			return
 		}
 
-		tokenDetails, err := jwt.GenerateToken(user, conf)
+		tokenDetails, err := jwt.GenerateToken(user, conf, tokenService)
 		if err != nil {
 			logger.Error("Failed to generate JWT: ", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
@@ -422,7 +423,7 @@ func validateToken(conf *config.Config) gin.HandlerFunc {
 // @Success 200 {object} jwt.TokenDetails
 // @Failure 401 {object} handler.HttpMsg
 // @Router /api/v1/user/refreshjwt [post]
-func refreshToken(conf *config.Config) gin.HandlerFunc {
+func refreshToken(conf *config.Config, tokenService token.TokenServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -436,7 +437,7 @@ func refreshToken(conf *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		tokenDetails, ok := jwt.RefreshJWT(refreshToken, conf)
+		tokenDetails, ok := jwt.RefreshJWT(refreshToken, conf, tokenService)
 		if !ok {
 			logger.Error("Token refresh failed: ", nil)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
@@ -444,6 +445,44 @@ func refreshToken(conf *config.Config) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, tokenDetails)
+	}
+}
+
+// @Summary Logout user
+// @Description Logout user by revoking refresh token
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Success 200 {object} handler.HttpMsg
+// @Failure 401 {object} handler.HttpMsg
+// @Router /api/v1/user/logout [post]
+func logout(tokenService token.TokenServiceInterface) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
+			return
+		}
+
+		tokenID, err := jwt.ExtractTokenID(authHeader)
+		if err != nil {
+			logger.Error("Failed to extract token ID: ", err)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			return
+		}
+
+		err = jwt.RevokeToken(tokenID, tokenService)
+		if err != nil {
+			logger.Error("Failed to revoke token: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Logout successful",
+			"code":    200,
+		})
 	}
 }
 

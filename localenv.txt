@@ -4,11 +4,18 @@ SRV_MODE=DEVELOPER
 
 # JWT
 SRV_JWT_SECRET_KEY=LinuxRust162!
-SRV_JWT_TOKEN_EXP=5          # 5 minutos
-SRV_JWT_REFRESH_EXP=30       # 30 minutos
+SRV_JWT_TOKEN_EXP=1440          # 1440 minutos
+SRV_JWT_REFRESH_EXP=10080     # 7 dias (7 * 24 * 60 = 10080 minutos)
 
 # Banco de dados PostgreSQL
 PGSQL_DB_NAME=katana_studiodb_user
 PGSQL_DB_USER=postgres
 PGSQL_DB_PASSWORD=supersenha
 PGSQL_DB_PORT=5432
+
+# Redis
+SRV_RDB_HOST=localhost
+SRV_RDB_PORT=6379
+SRV_RDB_USER=
+SRV_RDB_PASS=
+SRV_RDB_DB=0

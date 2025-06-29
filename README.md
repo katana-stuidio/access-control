@@ -17,12 +17,20 @@ Uma API de **autenticação e autorização** desenvolvida em **Golang**, utiliz
 export SRV_PORT=8080
 export SRV_MODE=DEVELOPER
 export SRV_JWT_SECRET_KEY=LinuxRust162!
-export SRV_JWT_TOKEN_EXP=5          # 5 minutos
-export SRV_JWT_REFRESH_EXP=30       # 30 minutos
-export SRV_DB_HOST=0.0.0.0  
-export SRV_DB_USER=postgres
-export SRV_DB_PASS=supersenha
-export SRV_DB_NAME=katana_db
+export SRV_JWT_TOKEN_EXP=60       
+export SRV_JWT_REFRESH_EXP=90
+export SRV_DB_HOST=aws-0-sa-east-1.pooler.supabase.com
+export SRV_DB_NAME=postgres
+export SRV_DB_USER=postgres.uldkaiigwtybxrxrvpxd
+export SRV_DB_PASS=LinuxJava!162
+export SRV_DB_PORT=5432
+export SRV_DB_SSL_MODE=require
+
+export SRV_RDB_HOST=localhost
+export SRV_RDB_PORT=6379
+export SRV_RDB_USER=
+export SRV_RDB_PASS=lalal
+export SRV_RDB_DB=0
 
   
 ## 📁 Estrutura Geral
