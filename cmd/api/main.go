@@ -9,11 +9,13 @@ import (
 	"github.com/katana-stuidio/access-control/internal/config"
 	"github.com/katana-stuidio/access-control/internal/config/logger"
 	hand_ten "github.com/katana-stuidio/access-control/internal/handler/tenant"
+	hand_ten_group "github.com/katana-stuidio/access-control/internal/handler/tenant_group"
 	hand_usr "github.com/katana-stuidio/access-control/internal/handler/user"
 	"github.com/katana-stuidio/access-control/pkg/adapter/pgsql"
 	"github.com/katana-stuidio/access-control/pkg/adapter/redisdb"
 	"github.com/katana-stuidio/access-control/pkg/server"
 	service_ten "github.com/katana-stuidio/access-control/pkg/service/tenant"
+	service_ten_group "github.com/katana-stuidio/access-control/pkg/service/tenant_group"
 	service_token "github.com/katana-stuidio/access-control/pkg/service/token"
 	service_usr "github.com/katana-stuidio/access-control/pkg/service/user"
 )
@@ -38,6 +40,7 @@ func main() {
 	// Inicializa serviços
 	usr_service := service_usr.NewUserService(conn_pg)
 	tenat_service := service_ten.NewTenantService(conn_pg)
+	tenant_group_service := service_ten_group.NewTenantGroupService(conn_pg)
 	token_service := service_token.NewTokenService(conn_redis, conf)
 
 	// Criação do router com Gin
@@ -65,8 +68,12 @@ func main() {
 	})
 
 	// Registra handlers do módulo user
-	hand_usr.RegisterUserAPIHandlers(router, usr_service, conf, token_service)
+	hand_usr.RegisterUserAPIHandlers(router, usr_service, tenat_service, tenant_group_service, conf, token_service)
 	hand_ten.RegisterTenantAPIHandlers(router, tenat_service)
+
+	// Registra handlers do módulo tenant group
+	tenant_group_handler := hand_ten_group.NewTenantGroupHandler(tenant_group_service)
+	hand_ten_group.SetupRoutes(router, tenant_group_handler)
 
 	// Cria servidor HTTP
 	srv := server.NewHTTPServer(router, conf)

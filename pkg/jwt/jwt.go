@@ -26,6 +26,9 @@ type Claims struct {
 	Username    string `json:"username"`
 	UserID      string `json:"user_id"`
 	TenantID    string `json:"tenant_id"`
+	TenantName  string `json:"tenant_name,omitempty"`
+	GroupID     string `json:"group_id,omitempty"`
+	GroupName   string `json:"group_name,omitempty"`
 	Role        string `json:"role"`
 	FirstAccess bool   `json:"first_access"`
 	Renew       bool   `json:"renew,omitempty"`
@@ -34,7 +37,7 @@ type Claims struct {
 }
 
 // GenerateToken generates both access and refresh tokens with Redis integration
-func GenerateToken(user *model.User, conf *config.Config, tokenService token.TokenServiceInterface) (*TokenDetails, error) {
+func GenerateToken(user *model.User, tenant *model.Tenant, tenantGroup *model.TenantGroup, conf *config.Config, tokenService token.TokenServiceInterface) (*TokenDetails, error) {
 	jwtKey := []byte(conf.JWTSecretKey)
 
 	// Generate a unique token ID for Redis storage
@@ -47,16 +50,23 @@ func GenerateToken(user *model.User, conf *config.Config, tokenService token.Tok
 	// Generate Access Token (short-lived)
 	accessExpiration := time.Now().Add(time.Duration(conf.JWTTokenExp) * time.Minute)
 	accessClaims := &Claims{
-		Username: user.Username,
-		UserID:   user.ID.String(),
-		TenantID: user.TenantID.String(),
-		Role:     user.Role,
-		Renew:    false,
-		TokenID:  tokenID,
+		Username:   user.Username,
+		UserID:     user.ID.String(),
+		TenantID:   user.TenantID.String(),
+		TenantName: tenant.Name,
+		Role:       user.Role,
+		Renew:      false,
+		TokenID:    tokenID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessExpiration),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
+	}
+
+	// Add group information if tenant belongs to a group
+	if tenant.GroupID != nil && tenantGroup != nil {
+		accessClaims.GroupID = tenantGroup.ID.String()
+		accessClaims.GroupName = tenantGroup.Name
 	}
 	accessToken, err := createToken(accessClaims, jwtKey)
 	if err != nil {
@@ -67,16 +77,23 @@ func GenerateToken(user *model.User, conf *config.Config, tokenService token.Tok
 	// Generate Refresh Token (long-lived)
 	refreshExpiration := time.Now().Add(time.Duration(conf.JWTRefreshExp) * time.Minute)
 	refreshClaims := &Claims{
-		Username: user.Username,
-		UserID:   user.ID.String(),
-		TenantID: user.TenantID.String(),
-		Role:     user.Role,
-		Renew:    true,
-		TokenID:  tokenID,
+		Username:   user.Username,
+		UserID:     user.ID.String(),
+		TenantID:   user.TenantID.String(),
+		TenantName: tenant.Name,
+		Role:       user.Role,
+		Renew:      true,
+		TokenID:    tokenID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(refreshExpiration),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
+	}
+
+	// Add group information if tenant belongs to a group
+	if tenant.GroupID != nil && tenantGroup != nil {
+		refreshClaims.GroupID = tenantGroup.ID.String()
+		refreshClaims.GroupName = tenantGroup.Name
 	}
 	refreshToken, err := createToken(refreshClaims, jwtKey)
 	if err != nil {

@@ -9,13 +9,14 @@ import (
 )
 
 type Tenant struct {
-	ID         uuid.UUID `json:"id"`
-	CNPJ       string    `json:"cnpj"`
-	Name       string    `json:"name"`
-	SchemaName string    `json:"schema_name"`
-	IsActive   bool      `json:"is_active"`
-	CreatedAt  time.Time `json:"created_at,omitempty"`
-	UpdatedAt  time.Time `json:"updated_at,omitempty"`
+	ID         uuid.UUID  `json:"id"`
+	GroupID    *uuid.UUID `json:"group_id,omitempty"` // optional, since not every tenant needs a group
+	CNPJ       string     `json:"cnpj"`
+	Name       string     `json:"name"`
+	SchemaName string     `json:"schema_name"`
+	IsActive   bool       `json:"is_active"`
+	CreatedAt  time.Time  `json:"created_at,omitempty"`
+	UpdatedAt  time.Time  `json:"updated_at,omitempty"`
 }
 
 type TenantList struct {

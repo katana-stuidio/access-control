@@ -96,7 +96,6 @@ func defaultConf() *Config {
 		},
 
 		RedisDBConfig: &RedisDBConfig{
-			RDB_HOST: "localhost",
 			RDB_PORT: "6379",
 			RDB_DB:   0,
 		},

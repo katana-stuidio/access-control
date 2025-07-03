@@ -44,7 +44,7 @@ func (ts *Tenant_service) GetAll(ctx context.Context, limit, page int64) (*model
 	// Get paginated data
 	offset := (paginate.Page - 1) * paginate.Limit
 	rows, err := ts.dbp.GetDB().QueryContext(ctx,
-		"SELECT id, cnpj, name, schema_name, is_active, created_at, updated_at FROM tb_tenant LIMIT $1 OFFSET $2",
+		"SELECT id, group_id, cnpj, name, schema_name, is_active, created_at, updated_at FROM tb_tenant LIMIT $1 OFFSET $2",
 		paginate.Limit, offset)
 	if err != nil {
 		logger.Error("Error querying tenants", err)
@@ -55,7 +55,7 @@ func (ts *Tenant_service) GetAll(ctx context.Context, limit, page int64) (*model
 	tenant_list := &model.TenantList{}
 	for rows.Next() {
 		t := model.Tenant{}
-		if err := rows.Scan(&t.ID, &t.CNPJ, &t.Name, &t.SchemaName, &t.IsActive, &t.CreatedAt, &t.UpdatedAt); err != nil {
+		if err := rows.Scan(&t.ID, &t.GroupID, &t.CNPJ, &t.Name, &t.SchemaName, &t.IsActive, &t.CreatedAt, &t.UpdatedAt); err != nil {
 			logger.Error("Error scanning tenant", err)
 			return nil, err
 		}
@@ -67,7 +67,7 @@ func (ts *Tenant_service) GetAll(ctx context.Context, limit, page int64) (*model
 }
 
 func (ts *Tenant_service) GetByID(ctx context.Context, ID uuid.UUID) *model.Tenant {
-	stmt, err := ts.dbp.GetDB().PrepareContext(ctx, "SELECT id, cnpj, name, schema_name, is_active, created_at, updated_at FROM tb_tenant WHERE id = $1")
+	stmt, err := ts.dbp.GetDB().PrepareContext(ctx, "SELECT id, group_id, cnpj, name, schema_name, is_active, created_at, updated_at FROM tb_tenant WHERE id = $1")
 	if err != nil {
 		logger.Error(err.Error(), err)
 	}
@@ -76,7 +76,7 @@ func (ts *Tenant_service) GetByID(ctx context.Context, ID uuid.UUID) *model.Tena
 
 	t := model.Tenant{}
 
-	if err := stmt.QueryRowContext(ctx, ID).Scan(&t.ID, &t.CNPJ, &t.Name, &t.SchemaName, &t.IsActive, &t.CreatedAt, &t.UpdatedAt); err != nil {
+	if err := stmt.QueryRowContext(ctx, ID).Scan(&t.ID, &t.GroupID, &t.CNPJ, &t.Name, &t.SchemaName, &t.IsActive, &t.CreatedAt, &t.UpdatedAt); err != nil {
 		logger.Error(err.Error(), err)
 	}
 
@@ -90,9 +90,9 @@ func (ts *Tenant_service) Create(ctx context.Context, tenant *model.Tenant) (*mo
 		return tenant, err
 	}
 
-	query := "INSERT INTO tb_tenant (id, cnpj, name, schema_name, is_active) VALUES ($1, $2, $3, $4, $5)"
+	query := "INSERT INTO tb_tenant (id, group_id, cnpj, name, schema_name, is_active) VALUES ($1, $2, $3, $4, $5, $6)"
 
-	_, err = tx.ExecContext(ctx, query, tenant.ID, tenant.CNPJ, tenant.Name, tenant.SchemaName, tenant.IsActive)
+	_, err = tx.ExecContext(ctx, query, tenant.ID, tenant.GroupID, tenant.CNPJ, tenant.Name, tenant.SchemaName, tenant.IsActive)
 	if err != nil {
 		logger.Error("Error executing SQL query insert tenant", err)
 		return tenant, err
@@ -116,9 +116,9 @@ func (ts *Tenant_service) Update(ctx context.Context, ID uuid.UUID, tenant *mode
 		logger.Error("Error starting transaction", err)
 	}
 
-	query := "UPDATE tb_tenant SET cnpj = $1, name = $2, schema_name = $3, is_active = $4 WHERE id = $5"
+	query := "UPDATE tb_tenant SET group_id = $1, cnpj = $2, name = $3, schema_name = $4, is_active = $5 WHERE id = $6"
 
-	result, err := tx.ExecContext(ctx, query, tenant.CNPJ, tenant.Name, tenant.SchemaName, tenant.IsActive, ID)
+	result, err := tx.ExecContext(ctx, query, tenant.GroupID, tenant.CNPJ, tenant.Name, tenant.SchemaName, tenant.IsActive, ID)
 	if err != nil {
 		logger.Error("Error updating tenant", err)
 		return 0
@@ -188,7 +188,7 @@ func (ts *Tenant_service) GetExistCNPJ(ctx context.Context, cnpj string) (bool, 
 }
 
 func (ts *Tenant_service) GetByCNPJ(ctx context.Context, CNPJ string) (*model.Tenant, error) {
-	stmt, err := ts.dbp.GetDB().PrepareContext(ctx, "SELECT id, cnpj, name, schema_name, is_active, created_at, updated_at FROM tb_tenant WHERE cnpj = $1")
+	stmt, err := ts.dbp.GetDB().PrepareContext(ctx, "SELECT id, group_id, cnpj, name, schema_name, is_active, created_at, updated_at FROM tb_tenant WHERE cnpj = $1")
 	t := model.Tenant{}
 	if err != nil {
 		logger.Error(err.Error(), err)
@@ -197,7 +197,7 @@ func (ts *Tenant_service) GetByCNPJ(ctx context.Context, CNPJ string) (*model.Te
 
 	defer stmt.Close()
 
-	if err := stmt.QueryRowContext(ctx, CNPJ).Scan(&t.ID, &t.CNPJ, &t.Name, &t.SchemaName, &t.IsActive, &t.CreatedAt, &t.UpdatedAt); err != nil {
+	if err := stmt.QueryRowContext(ctx, CNPJ).Scan(&t.ID, &t.GroupID, &t.CNPJ, &t.Name, &t.SchemaName, &t.IsActive, &t.CreatedAt, &t.UpdatedAt); err != nil {
 		logger.Error(err.Error(), err)
 		return &t, err
 	}

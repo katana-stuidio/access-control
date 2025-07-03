@@ -12,6 +12,8 @@ import (
 	"github.com/katana-stuidio/access-control/internal/dto"
 	"github.com/katana-stuidio/access-control/pkg/jwt"
 	"github.com/katana-stuidio/access-control/pkg/model"
+	service_ten "github.com/katana-stuidio/access-control/pkg/service/tenant"
+	service_ten_group "github.com/katana-stuidio/access-control/pkg/service/tenant_group"
 	"github.com/katana-stuidio/access-control/pkg/service/token"
 	"github.com/katana-stuidio/access-control/pkg/service/user"
 	"github.com/potatowski/brazilcode"
@@ -352,7 +354,7 @@ func deleteUser(service user.UserServiceInterface) gin.HandlerFunc {
 // @Failure 401 {object} handler.HttpMsg
 // @Failure 500 {object} handler.HttpMsg
 // @Router /api/v1/user/getjwt [post]
-func getJWT(service user.UserServiceInterface, conf *config.Config, tokenService token.TokenServiceInterface) gin.HandlerFunc {
+func getJWT(service user.UserServiceInterface, tenantService service_ten.TenantServiceInterface, tenantGroupService service_ten_group.TenantGroupServiceInterface, conf *config.Config, tokenService token.TokenServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var loginRequest dto.LoginRequest
 
@@ -369,7 +371,21 @@ func getJWT(service user.UserServiceInterface, conf *config.Config, tokenService
 			return
 		}
 
-		tokenDetails, err := jwt.GenerateToken(user, conf, tokenService)
+		// Fetch tenant information
+		tenant := tenantService.GetByID(c.Request.Context(), user.TenantID)
+		if tenant.ID == uuid.Nil {
+			logger.Error("Tenant not found for user: "+user.ID.String(), nil)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Tenant information not found"})
+			return
+		}
+
+		// Fetch tenant group information if tenant belongs to a group
+		var tenantGroup *model.TenantGroup
+		if tenant.GroupID != nil {
+			tenantGroup = tenantGroupService.GetByID(c.Request.Context(), *tenant.GroupID)
+		}
+
+		tokenDetails, err := jwt.GenerateToken(user, tenant, tenantGroup, conf, tokenService)
 		if err != nil {
 			logger.Error("Failed to generate JWT: ", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
