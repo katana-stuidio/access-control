@@ -104,7 +104,7 @@ func New(conf *config.Config) *dabase_pool {
 
 	switch conf.DB_DRIVE {
 	case "postgres":
-		sslMode := "require"	
+		sslMode := "disable"
 		if conf.Mode != config.PRODUCTION {
 			if conf.SRV_DB_SSL_MODE == "" {
 				sslMode = "require"

@@ -24,7 +24,9 @@ CREATE TABLE public.tb_tenant (
 
   group_id    uuid NOT NULL,
   CONSTRAINT  fk_tenant_group
-    FOREIGN KEY (group_id) REFERENCES public.tb_tenant_group(id),
+    FOREIGN KEY (group_id) REFERENCES public.tb_tenant_group(id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
 
   name        varchar(150) NOT NULL,
   cnpj        varchar(30)  NOT NULL UNIQUE,
@@ -33,6 +35,9 @@ CREATE TABLE public.tb_tenant (
   created_at  timestamp                    DEFAULT now(),
   updated_at  timestamp                    DEFAULT now()
 );
+
+-- Add index for better performance
+CREATE INDEX idx_tenant_group_id ON public.tb_tenant(group_id);
 
 /* ============================================================
    3) Tabela: public.tb_user

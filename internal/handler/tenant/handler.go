@@ -120,6 +120,7 @@ func createTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
 		var tenantModel model.Tenant
 		tenantModel.Name = tenantDto.Name
 		tenantModel.CNPJ = tenantDto.CNPJ
+		tenantModel.GroupID = tenantDto.GroupID
 
 		tenantCad, err := model.NewTenant(&tenantModel)
 		if err != nil {
@@ -163,6 +164,7 @@ func createTenant(service tenant.TenantServiceInterface) http.HandlerFunc {
 
 		var resultOut dto.TenantRequestDtoOutPut
 		resultOut.ID = result.ID
+		resultOut.GroupID = result.GroupID
 		resultOut.Name = result.Name
 		resultOut.CNPJ = result.CNPJ
 		resultOut.SchemaName = result.SchemaName

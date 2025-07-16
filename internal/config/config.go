@@ -90,9 +90,8 @@ func defaultConf() *Config {
 		JWTRefreshExp: 10080,           // 7 days for refresh token (7 * 24 * 60 = 10080 minutes)
 
 		PGSQLConfig: &PGSQLConfig{
-			DB_DRIVE:        "postgres",
-			DB_PORT:         "5432",
-			SRV_DB_SSL_MODE: "require",
+			DB_DRIVE: "postgres",
+			DB_PORT:  "5432",
 		},
 
 		RedisDBConfig: &RedisDBConfig{
