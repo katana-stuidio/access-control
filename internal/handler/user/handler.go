@@ -379,11 +379,8 @@ func getJWT(service user.UserServiceInterface, tenantService service_ten.TenantS
 			return
 		}
 
-		// Fetch tenant group information if tenant belongs to a group
-		var tenantGroup *model.TenantGroup
-		if tenant.GroupID != nil {
-			tenantGroup = tenantGroupService.GetByID(c.Request.Context(), *tenant.GroupID)
-		}
+		// Fetch tenant group information (now mandatory)
+		tenantGroup := tenantGroupService.GetByID(c.Request.Context(), tenant.GroupID)
 
 		tokenDetails, err := jwt.GenerateToken(user, tenant, tenantGroup, conf, tokenService)
 		if err != nil {

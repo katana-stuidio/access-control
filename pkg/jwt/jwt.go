@@ -63,8 +63,8 @@ func GenerateToken(user *model.User, tenant *model.Tenant, tenantGroup *model.Te
 		},
 	}
 
-	// Add group information if tenant belongs to a group
-	if tenant.GroupID != nil && tenantGroup != nil {
+	// Add group information (now mandatory)
+	if tenantGroup != nil {
 		accessClaims.GroupID = tenantGroup.ID.String()
 		accessClaims.GroupName = tenantGroup.Name
 	}
@@ -90,8 +90,8 @@ func GenerateToken(user *model.User, tenant *model.Tenant, tenantGroup *model.Te
 		},
 	}
 
-	// Add group information if tenant belongs to a group
-	if tenant.GroupID != nil && tenantGroup != nil {
+	// Add group information (now mandatory)
+	if tenantGroup != nil {
 		refreshClaims.GroupID = tenantGroup.ID.String()
 		refreshClaims.GroupName = tenantGroup.Name
 	}
